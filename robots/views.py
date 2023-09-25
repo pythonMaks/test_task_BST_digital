@@ -14,12 +14,18 @@ def create_robot(request):
             created_str = data.get('created')
             
             
-            if not (model and version and created_str):
-                return JsonResponse({"error": "Invalid data"}, status=400)
+            if not model or len(model) != 2:
+                return JsonResponse({"error": "Invalid model"}, status=400)
+            if not version or len(version) != 2:
+                return JsonResponse({"error": "Invalid version"}, status=400)
+            if not created_str:
+                return JsonResponse({"error": "Invalid created"}, status=400)
             
-            
-            created = datetime.strptime(created_str, '%Y-%m-%d %H:%M:%S')            
-            
+            try:
+                created = datetime.strptime(created_str, '%Y-%m-%d %H:%M:%S')
+            except ValueError:
+                return JsonResponse({"error": "Invalid date format"}, status=400)
+
             serial = f"{model}-{version}"
             
             Robot.objects.create(serial=serial, model=model, version=version, created=created)

@@ -22,7 +22,29 @@ class RobotTest(TestCase):
         self.assertEqual(robot.version, "D2")
         self.assertEqual(robot.created, datetime.strptime("2022-12-31 23:59:59", '%Y-%m-%d %H:%M:%S'))
     
-    def test_create_robot_failure(self):
+    
+    def test_create_robot_invalid_model(self):
+        invalid_data = self.valid_data.copy()
+        invalid_data["model"] = "R22" 
+        response = self.client.post(self.url, data=invalid_data, content_type='application/json')
+        self.assertEqual(response.status_code, 400)
+        
+
+    def test_create_robot_invalid_version(self):
+        invalid_data = self.valid_data.copy()
+        invalid_data["version"] = "D22" 
+        response = self.client.post(self.url, data=invalid_data, content_type='application/json')
+        self.assertEqual(response.status_code, 400)
+        
+
+    def test_create_robot_invalid_date(self):
+        invalid_data = self.valid_data.copy()
+        invalid_data["created"] = "2022-12-31T23:59:59" 
+        response = self.client.post(self.url, data=invalid_data, content_type='application/json')
+        self.assertEqual(response.status_code, 400)   
+    
+    
+    def test_create_robot_missing_fields(self):
         invalid_data = {
             "model": "R2",
             "version": "D2",
