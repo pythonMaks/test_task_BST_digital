@@ -65,3 +65,17 @@ class RobotTest(TestCase):
         }
         response = self.client.post(self.url, data=invalid_data, content_type='application/json')
         self.assertEqual(response.status_code, 400)
+
+class ExportExcelTest(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.url = '/export_excel/'
+
+    def test_export_excel_response(self):
+        response = self.client.get(self.url)        
+    
+        self.assertEqual(response.status_code, 200)        
+
+        self.assertEqual(response['Content-Type'], 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+
+        self.assertTrue('Content-Disposition' in response)
