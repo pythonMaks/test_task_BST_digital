@@ -1,10 +1,13 @@
 from django.http import JsonResponse
-#from django.views.decorators.csrf import csrf_exempt
-from .models import Robot
+from django.views.decorators.csrf import csrf_exempt
 import json
-from datetime import datetime
+from django.http import HttpResponse
+from openpyxl import Workbook
+from .models import Robot
+from datetime import datetime, timedelta
+from collections import defaultdict
 
-#@csrf_exempt
+@csrf_exempt
 def create_robot(request):
     if request.method == 'POST':
         try:
@@ -33,3 +36,35 @@ def create_robot(request):
             return JsonResponse({"success": True}, status=201)
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=500)
+
+
+def export_excel(request):
+    wb = Workbook()
+    wb.remove(wb.active)
+
+    one_week_ago = datetime.now() - timedelta(weeks=1)
+    robots = Robot.objects.filter(created__gte=one_week_ago)
+
+    grouped_data = defaultdict(list)
+    
+    for robot in robots:
+        grouped_data[robot.model].append(robot)        
+   
+    for model, robots_list in grouped_data.items():
+        ws = wb.create_sheet(title=model)       
+        ws.append(["Модель", "Версия", "Количество за неделю"])
+        
+        version_count = defaultdict(int)
+        for robot in robots_list:
+            version_count[robot.version] += 1
+        for version, count in version_count.items():
+            ws.append([model, version, count])
+            
+    if not wb.worksheets or all(ws.sheet_state == 'hidden' for ws in wb.worksheets):
+        wb.create_sheet(title="Empty")
+
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = 'attachment; filename=Robots_report.xlsx'
+    wb.save(response)
+
+    return response
